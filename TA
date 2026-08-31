@@ -1,0 +1,297 @@
+-- [[ 56 SCRIPT - Main UI ]] --
+
+-- 1. Key System Setup
+local CorrectKey = "49"
+local KeyVerified = false
+
+-- Key System Window (Draggable & Fluent Design)
+local KeySystemUI = Instance.new("ScreenGui")
+local MainFrame = Instance.new("Frame")
+local UICorner = Instance.new("UICorner")
+local UIStroke = Instance.new("UIStroke")
+local Title = Instance.new("TextLabel")
+local KeyInput = Instance.new("TextBox")
+local SubmitBtn = Instance.new("TextButton")
+local BtnCorner = Instance.new("UICorner")
+
+KeySystemUI.Name = "KeySystem56"
+KeySystemUI.Parent = game.CoreGui
+
+MainFrame.Parent = KeySystemUI
+MainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
+MainFrame.Position = UDim2.new(0.5, -150, 0.5, -100)
+MainFrame.Size = UDim2.new(0, 300, 0, 200)
+MainFrame.Active = true
+MainFrame.Draggable = true -- ทำให้หน้าต่าง Key ลากขยับได้
+
+UICorner.CornerRadius = UDim.new(0, 12)
+UICorner.Parent = MainFrame
+
+UIStroke.Color = Color3.fromRGB(0, 170, 255)
+UIStroke.Thickness = 2
+UIStroke.Parent = MainFrame
+
+Title.Parent = MainFrame
+Title.BackgroundTransparency = 1
+Title.Position = UDim2.new(0, 0, 0, 15)
+Title.Size = UDim2.new(1, 0, 0, 30)
+Title.Font = Enum.Font.GothamBold
+Title.Text = "ระบบใส่ KEY (56 SCRIPT)"
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.TextSize = 18
+
+KeyInput.Parent = MainFrame
+KeyInput.BackgroundColor3 = Color3.fromRGB(40, 40, 55)
+KeyInput.Position = UDim2.new(0.1, 0, 0.35, 0)
+KeyInput.Size = UDim2.new(0.8, 0, 0, 40)
+KeyInput.Font = Enum.Font.Gotham
+KeyInput.PlaceholderText = "กรอก KEY ที่นี่ (49)..."
+KeyInput.Text = ""
+KeyInput.TextColor3 = Color3.fromRGB(255, 255, 255)
+KeyInput.TextSize = 14
+
+local InputCorner = Instance.new("UICorner")
+InputCorner.CornerRadius = UDim.new(0, 8)
+InputCorner.Parent = KeyInput
+
+SubmitBtn.Parent = MainFrame
+SubmitBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+SubmitBtn.Position = UDim2.new(0.2, 0, 0.7, 0)
+SubmitBtn.Size = UDim2.new(0.6, 0, 0, 40)
+SubmitBtn.Font = Enum.Font.GothamBold
+SubmitBtn.Text = "ยืนยัน KEY"
+SubmitBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+SubmitBtn.TextSize = 16
+
+BtnCorner.CornerRadius = UDim.new(0, 8)
+BtnCorner.Parent = SubmitBtn
+
+-- Wait for key input logic
+local bindable = Instance.new("BindableEvent")
+
+SubmitBtn.MouseButton1Click:Connect(function()
+    if KeyInput.Text == CorrectKey then
+        KeyVerified = true
+        KeySystemUI:Destroy()
+        bindable:Fire()
+    else
+        KeyInput.Text = ""
+        KeyInput.PlaceholderText = "KEY ไม่ถูกต้อง! (ลอง: 49)"
+    end
+end)
+
+if not KeyVerified then
+    bindable.Event:Wait()
+end
+
+-- 2. Load Main Script Interface (Fluent UI Library)
+local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
+local SaveManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/Fluent/master/Addons/SaveManager.lua"))()
+
+local Window = Fluent:CreateWindow({
+    Title = "56 SCRIPT",
+    SubTitle = "v1.0 - Premium Hub",
+    TabWidth = 160,
+    Size = UDim2.fromOffset(580, 400),
+    Theme = "Darker",
+    MinimizeKey = Enum.KeyCode.RightControl
+})
+
+-- Tabs
+local Tabs = {
+    Main = Window:AddTab({ Title = "ฟังก์ชันหลัก / Main", Icon = "home" }),
+    Settings = Window:AddTab({ Title = "ตั้งค่า / Settings", Icon = "settings" })
+}
+
+-- [[ VARIABLES & SERVICES ]] --
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+
+local SpeedEnabled = false
+local InfiniteJumpEnabled = false
+local SpinEnabled = false
+local SpinSpeed = 50
+local ESPEnabled = false
+local ESPColor = Color3.fromRGB(255, 0, 0) -- Default Red
+
+-- [[ FUNCTIONALITY ]] --
+
+-- 1. วิ่งเร็ว 100
+Tabs.Main:AddToggle("SpeedToggle", {
+    Title = "วิ่งเร็ว (WalkSpeed 100)",
+    Default = false,
+    Callback = function(Value)
+        SpeedEnabled = Value
+        if not Value and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+            LocalPlayer.Character.Humanoid.WalkSpeed = 16
+        end
+    end
+})
+
+RunService.RenderStepped:Connect(function()
+    if SpeedEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+        LocalPlayer.Character.Humanoid.WalkSpeed = 100
+    end
+end)
+
+-- 2. กระโดดไม่จำกัด (Infinite Jump)
+Tabs.Main:AddToggle("InfJumpToggle", {
+    Title = "กระโดดไม่จำกัด (Infinite Jump)",
+    Default = false,
+    Callback = function(Value)
+        InfiniteJumpEnabled = Value
+    end
+})
+
+UserInputService.JumpRequest:Connect(function()
+    if InfiniteJumpEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
+        LocalPlayer.Character:FindFirstChildOfClass("Humanoid"):ChangeState("Jumping")
+    end
+end)
+
+-- 3. ลดความกระตุก/แล็ค & เพิ่ม FPS
+Tabs.Main:AddButton({
+    Title = "ลดความกระตุก & เพิ่ม FPS (Boost FPS)",
+    Description = "ลบเอฟเฟกต์/ลดรายละเอียดกราฟิกเพื่อเพิ่มความลื่น",
+    Callback = function()
+        for _, v in pairs(game:GetService("Workspace"):GetDescendants()) do
+            if v:IsA("BasePart") then
+                v.Material = Enum.Material.Plastic
+                v.Reflectance = 0
+            elseif v:IsA("Decal") or v:IsA("Texture") then
+                v:Destroy()
+            elseif v:IsA("ParticleEmitter") or v:IsA("Trail") then
+                v.Enabled = false
+            end
+        end
+        game:GetService("Lighting").GlobalShadows = false
+        Fluent:Notify({ Title = "56 SCRIPT", Content = "เพิ่ม FPS เรียบร้อยแล้ว!", Duration = 3 })
+    end
+})
+
+-- 4. มองชื่อ (ESP Name) + เลือกสี 3 สี
+local function UpdateESP()
+    for _, plr in pairs(Players:GetPlayers()) do
+        if plr ~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("Head") then
+            local head = plr.Character.Head
+            local bb = head:FindFirstChild("ESP_NameTag")
+            
+            if ESPEnabled then
+                if not bb then
+                    bb = Instance.new("BillboardGui")
+                    bb.Name = "ESP_NameTag"
+                    bb.AlwaysOnTop = true
+                    bb.Size = UDim2.new(0, 100, 0, 30)
+                    bb.StudsOffset = Vector3.new(0, 3, 0)
+                    
+                    local label = Instance.new("TextLabel")
+                    label.Name = "Label"
+                    label.Parent = bb
+                    label.BackgroundTransparency = 1
+                    label.Size = UDim2.new(1, 0, 1, 0)
+                    label.Font = Enum.Font.GothamBold
+                    label.TextSize = 14
+                    label.TextStrokeTransparency = 0.5
+                    bb.Parent = head
+                end
+                
+                bb.Label.Text = plr.Name
+                bb.Label.TextColor3 = ESPColor
+            else
+                if bb then bb:Destroy() end
+            end
+        end
+    end
+end
+
+Tabs.Main:AddToggle("ESPToggle", {
+    Title = "เปิดระบบมองชื่อ (ESP Name)",
+    Default = false,
+    Callback = function(Value)
+        ESPEnabled = Value
+        if not Value then
+            for _, plr in pairs(Players:GetPlayers()) do
+                if plr.Character and plr.Character:FindFirstChild("Head") and plr.Character.Head:FindFirstChild("ESP_NameTag") then
+                    plr.Character.Head.ESP_NameTag:Destroy()
+                end
+            end
+        end
+    end
+})
+
+Tabs.Main:AddDropdown("ESPColorDropdown", {
+    Title = "เลือกสี ESP (3 สี)",
+    Values = {"สีแดง (Red)", "สีน้ำเงิน (Blue)", "สีขาว (White)"},
+    Default = "สีแดง (Red)",
+    Callback = function(Value)
+        if Value == "สีแดง (Red)" then
+            ESPColor = Color3.fromRGB(255, 0, 0)
+        elseif Value == "สีน้ำเงิน (Blue)" then
+            ESPColor = Color3.fromRGB(0, 100, 255)
+        elseif Value == "สีขาว (White)" then
+            ESPColor = Color3.fromRGB(255, 255, 255)
+        end
+    end
+})
+
+RunService.RenderStepped:Connect(function()
+    if ESPEnabled then UpdateESP() end
+end)
+
+-- 5. หมุนตัวเอง 360 องศา (ปรับความเร็วได้ 1-200)
+Tabs.Main:AddToggle("SpinToggle", {
+    Title = "หมุนตัวเอง 360 องศา",
+    Default = false,
+    Callback = function(Value)
+        SpinEnabled = Value
+    end
+})
+
+Tabs.Main:AddSlider("SpinSpeedSlider", {
+    Title = "ปรับความเร็วการหมุน (1-200)",
+    Default = 50,
+    Min = 1,
+    Max = 200,
+    Rounding = 0,
+    Callback = function(Value)
+        SpinSpeed = Value
+    end
+})
+
+RunService.RenderStepped:Connect(function()
+    if SpinEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+        LocalPlayer.Character.HumanoidRootPart.CFrame = LocalPlayer.Character.HumanoidRootPart.CFrame * CFrame.Angles(0, math.rad(SpinSpeed), 0)
+    end
+end)
+
+-- [[ SETTINGS TAB (เปลี่ยนภาษา TH / EN) ]] --
+local LangParagraph = Tabs.Settings:AddParagraph({
+    Title = "ภาษาปัจจุบัน / Current Language",
+    Content = "ภาษาไทย (Thai)"
+})
+
+Tabs.Settings:AddDropdown("LanguageDropdown", {
+    Title = "เปลี่ยนภาษา / Change Language",
+    Values = {"ไทย (Thai)", "English"},
+    Default = "ไทย (Thai)",
+    Callback = function(Value)
+        if Value == "ไทย (Thai)" then
+            LangParagraph:SetTitle("ภาษาปัจจุบัน")
+            LangParagraph:SetDesc("ภาษาไทย")
+            Window:SetTitle("56 SCRIPT - ภาษาไทย")
+        else
+            LangParagraph:SetTitle("Current Language")
+            LangParagraph:SetDesc("English Language")
+            Window:SetTitle("56 SCRIPT - English")
+        end
+    end
+})
+
+-- แจ้งเตือนเมื่อโหลดสำเร็จ
+Fluent:Notify({
+    Title = "56 SCRIPT Loaded!",
+    Content = "กด RightControl เพื่อเปิด/ปิด หน้าต่างเมนู",
+    Duration = 5
+})
